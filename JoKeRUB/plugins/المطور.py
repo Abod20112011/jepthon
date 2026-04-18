@@ -1,15 +1,8 @@
 # -*- coding: utf-8 -*-
 from JoKeRUB import l313l, bot
-import time
-from telethon.tl import types
-from JoKeRUB import BOTLOG_CHATID
-from ..sql_helper.globals import addgvar, delgvar, gvarstatus
-import asyncio
 from ..Config import Config
-import requests
+from ..core.managers import edit_or_reply
 from telethon import Button, events
-from telethon.tl.functions.messages import ExportChatInviteRequest
-from ..core.managers import edit_delete, edit_or_reply
 
 # ========== إعدادات المطور ==========
 DEV_TEXT = (
@@ -27,10 +20,10 @@ Bot_Username = Config.TG_BOT_USERNAME
 if Config.TG_BOT_USERNAME is not None and tgbot is not None:
 
     @tgbot.on(events.InlineQuery)
-    async def inline_handler(event):
+    async def dev_inline_handler(event):  # اسم فريد
         builder = event.builder
         result = None
-        query = event.text
+        query = event.text.strip()
         await bot.get_me()
         if query.startswith("المطور") and event.query.user_id == bot.uid:
             buttons = [
@@ -64,15 +57,16 @@ if Config.TG_BOT_USERNAME is not None and tgbot is not None:
                 )
         await event.answer([result] if result else None)
 
+
 @bot.on(admin_cmd(outgoing=True, pattern="المطور$"))
-async def repo(event):
+async def developer_repo(event):  # اسم فريد
     if event.fwd_from:
         return
     lMl10l = Config.TG_BOT_USERNAME
     if event.reply_to_msg_id:
         await event.get_reply_message()
     response = await bot.inline_query(lMl10l, "المطور")
-    if response:
+    if response:  # ✅ فحص لتجنب الخطأ
         await response[0].click(event.chat_id, reply_to=event.reply_to_msg_id)
         await event.delete()
     else:
