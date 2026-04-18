@@ -49,7 +49,6 @@ IS_SELECTED_DIFFERENT_BRANCH = (
 
 
 # -- انتهاء الثوابت -- #
-#ياعلي
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 requirements_path = os.path.join(
@@ -64,31 +63,22 @@ def format_changelog(repo, diff):
         return ""
     
     lines = []
-    # عنوان رئيسي
     lines.append("ᯓ 𝗦𝗢𝗨𝗥𝗖𝗘 𝗔𝗕𝗢𝗢𝗗 🝢 تـغـيـرات الـبـوت")
     lines.append("•─────────────────•")
     
     for commit in commits:
-        # استخراج أسماء الملفات المتغيرة في هذا الكوميت
         files = commit.stats.files.keys()
         for file in files:
-            # نأخذ فقط اسم الملف بدون المسار الكامل
             filename = os.path.basename(file)
-            # نتجنب الملفات غير المهمة
             if filename.endswith(('.py', '.json', '.txt')):
                 lines.append(f"•⎆┊ Update {filename}")
         
-        # اسم المستخدم (نستخدم اسم الكوميتر، ويمكنك تغييره إلى ثابت)
-        # سنستخدم اسم المطور الثابت لأن المستخدم يريد @BD_0I
-        committer = "@BD_0I"  # أو commit.author.name لكن الأفضل ثابت
-        # التاريخ بصيغة dd/mm/yy
+        committer = "@BD_0I"
         date_str = commit.committed_datetime.strftime("%d/%m/%y")
         lines.append(f"•⎆┊ BY : {committer}")
         lines.append(f"•⎆┊ {date_str}")
-        # إضافة فاصل بسيط بين الكوميتات إذا كان هناك أكثر من واحد
         lines.append("•─────────────────•")
     
-    # إزالة السطر الفاصل الأخير إذا كان موجوداً
     if lines and lines[-1] == "•─────────────────•":
         lines.pop()
     
@@ -96,7 +86,6 @@ def format_changelog(repo, diff):
 
 
 async def gen_chlog(repo, diff):
-    """الاحتفاظ بالدالة القديمة لاستخدامات أخرى (اختياري)"""
     d_form = "%d/%m/%y"
     return "".join(
         f" • {c.message} {c.author}\n ({c.committed_datetime.strftime(d_form)}) "
@@ -104,8 +93,7 @@ async def gen_chlog(repo, diff):
         )
 
 
-async def print_changelogs(event, ac_br, changelog):
-    # استخدام التنسيق الجديد
+async def print_changelogs(event, repo, ac_br, changelog):
     formatted = format_changelog(repo, f"HEAD..upstream/{ac_br}")
     if len(formatted) > 4096:
         await event.edit("`سجل التغييرات كبير جداً، سيتم إرساله كملف.`")
@@ -331,14 +319,13 @@ async def upstream(event):
     ups_rem = repo.remote("upstream")
     ups_rem.fetch(ac_br)
     changelog = await gen_chlog(repo, f"HEAD..upstream/{ac_br}")
-    # Special case for deploy
     if changelog == "" and not force_update:
         await event.edit(
             "**᯽︙ 🤍 لا توجد تحديثات حتى الآن **\n"
         )
         return repo.__del__()
     if conf == "" and not force_update:
-        await print_changelogs(event, ac_br, changelog)
+        await print_changelogs(event, repo, ac_br, changelog)
         await event.delete()
         return await event.respond(
             f"⌔ :  لتحديث سورس عبود ارسل : `.تحديث الان` "
@@ -450,14 +437,13 @@ async def reda(event):
         ups_rem = repo.remote("upstream")
         ups_rem.fetch(ac_br)
         changelog = await gen_chlog(repo, f"HEAD..upstream/{ac_br}")
-        # Special case for deploy
         if changelog == "" and not force_update:
             await event.edit(
                 "**᯽︙ 🤍 لا توجد تحديثات الى الان **\n"
             )
             return repo.__del__()
         if conf == "" and not force_update:
-            await print_changelogs(event, ac_br, changelog)
+            await print_changelogs(event, repo, ac_br, changelog)
             await event.delete()
             return await event.respond(
                 f"⌔ :  لتحديث سورس عبود ارسل : `.تحديث الان` "
@@ -525,14 +511,13 @@ async def Hussein(event):
                 ups_rem = repo.remote("upstream")
                 ups_rem.fetch(ac_br)
                 changelog = await gen_chlog(repo, f"HEAD..upstream/{ac_br}")
-                # Special case for deploy
                 if changelog == "" and not force_update:
                     await event.edit(
                         "**᯽︙ 🤍 لا توجد تحديثات الى الان **\n"
                     )
                     return repo.__del__()
                 if conf == "" and not force_update:
-                    await print_changelogs(event, ac_br, changelog)
+                    await print_changelogs(event, repo, ac_br, changelog)
                     await event.delete()
                     return await event.respond(
                         f"⌔ :  لتحديث سورس عبود ارسل : `.تحديث الان` "
