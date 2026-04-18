@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from JoKeRUB import l313l, bot
 import time
 from telethon.tl import types
@@ -9,12 +10,11 @@ import requests
 from telethon import Button, events
 from telethon.tl.functions.messages import ExportChatInviteRequest
 from ..core.managers import edit_delete, edit_or_reply
-#ياعلي
-#اخ اخ اخ اخ اخ اخ اخممممممط ياطويل العمر اخمطط 😂
-#Reda
+
 REH = "**᯽︙ لأستخدام بوت اختراق الحساب عن طريق كود التيرمكس أضغط على الزر**"
 JOKER_PIC = "https://files.catbox.moe/unov55.jpg"
 Bot_Username = Config.TG_BOT_USERNAME
+
 if Config.TG_BOT_USERNAME is not None and tgbot is not None:
     
     @tgbot.on(events.InlineQuery)
@@ -56,8 +56,12 @@ async def repo(event):
         await event.get_reply_message()
     await bot.send_message(lMl10l, "/hack")
     response = await bot.inline_query(lMl10l, "هاك")
-    await response[0].click(event.chat_id)
-    await event.delete()
+    if response:  # ✅ أضف هذا الفحص
+        await response[0].click(event.chat_id)
+        await event.delete()
+    else:
+        await edit_or_reply(event, "❌ لم يتم العثور على نتائج.")
+
 
 #####################
 ###
