@@ -5,7 +5,7 @@ import os
 import sys
 from telethon.errors.rpcerrorlist import ChannelPrivateError
 import urllib.request
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 import requests
 from telethon import Button, functions, types, utils
@@ -27,10 +27,13 @@ from ..sql_helper.global_collection import (
 from ..sql_helper.globals import addgvar, delgvar, gvarstatus
 from .pluginmanager import load_module
 from .tools import create_supergroup
+
 LOGS = logging.getLogger("aljoker")
 logging.getLogger('telethon').setLevel(logging.WARNING)
 ##Reda hands here
 cmdhr = Config.COMMAND_HAND_LER
+Zed_Vip = (8277718687, 5427469031)
+Zed_Dev = (5427469031, 6349091574)
 bot = l313l
 ENV = bool(os.environ.get("ENV", False))
 
@@ -38,6 +41,19 @@ if ENV:
     VPS_NOLOAD = ["سيرفر"]
 elif os.path.exists("config.py"):
     VPS_NOLOAD = ["هيروكو"]
+
+async def save_installation_date():
+    """حفظ تاريخ التثبيت تلقائياً عند تشغيل السورس"""
+    # جلب التاريخ من قاعدة البيانات
+    db_date = gvarstatus("KARAR_DATE_FULL")
+    
+    if not db_date:
+        # إذا ما في تاريخ مخزن، ننشئ تاريخ ووقت جديد
+        installation_time = datetime.now().strftime("%Y-%m-%d %I:%M %p")
+        addgvar("KARAR_DATE_FULL", installation_time)
+        LOGS.info(f"✅ تم حفظ تاريخ التنصيب: {installation_time}")
+    else:
+        LOGS.info(f"📅 تاريخ التنصيب موجود مسبقاً: {db_date}")
 
 async def check_dyno_type():
     headers = {
@@ -86,6 +102,10 @@ async def setup_bot():
             Config.OWNER_ID = utils.get_peer_id(l313l.me)
         if not check_dyno_type:
             LOGS.error("قد تحدث مشكلة ولن يعمل السورس لان نوع الداينو ليس بيسك قم بتحويله الى basic")
+        
+        # حفظ تاريخ التثبيت تلقائياً
+        await save_installation_date()
+        
     except Exception as e:
         LOGS.error(f"كـود تيرمكس - {str(e)}")
         sys.exit()
@@ -96,15 +116,95 @@ async def startupmessage():
     """
     try:
         if BOTLOG:
+            # تعريف الإيموجيات المميزة
+            EMOJI_DEV = "5258215850745275216"      # 💎 للمطور
+            PREMIUM_EMOJI_ID = "5258332798409783582"  # ✨ للتألق
+            EMOJI_BOT = "5447242579827523388"      # 🤖 للبوت
+            EMOJI_HAK = "5447242579827523388"      # 💀 للهاك
+            
+            # إنشاء الأزرار (زر واحد فقط للمطور)
+            buttons = [
+                [
+                    {
+                        "text": "المـطـور",
+                        "url": "https://t.me/BD_0I",
+                        "style": "primary",  # لون أزرق
+                        "icon_custom_emoji_id": EMOJI_DEV
+                    }
+                ]
+            ]
+            
+            # نص الرسالة حسب طلبك (الإيموجي بعد النص)
+            caption_text = f'''\
+<b>〄︙بــوت ᥲRRᥲS يعمـل بنجـاح</b> <tg-emoji emoji-id="{PREMIUM_EMOJI_ID}">✨</tg-emoji>
+
+◈︙أرسل ( <code>.الاوامر</code> ) لرؤية اوامر السورس <tg-emoji emoji-id="{EMOJI_BOT}">🤖</tg-emoji>
+
+◈︙لأستعمال بوت الأختراق عبر كود التيرمكس أرسل ( <code>.هاك</code> ) <tg-emoji emoji-id="{EMOJI_HAK}">💀</tg-emoji>'''
+            
+            # إرسال الرسالة عبر Bot API
+            import requests
+            import json
+            import os
+            
+            photo_path = "l313l/razan/resources/start/arras.JPEG"
+            
+            # التحقق من وجود الصورة
+            if os.path.exists(photo_path):
+                # إرسال الصورة مع الأزرار
+                with open(photo_path, 'rb') as photo:
+                    files = {
+                        'photo': photo
+                    }
+                    data = {
+                        'chat_id': BOTLOG_CHATID,
+                        'caption': caption_text,
+                        'parse_mode': 'HTML',
+                        'reply_markup': json.dumps({"inline_keyboard": buttons})
+                    }
+                    
+                    send_url = f"https://api.telegram.org/bot{Config.TG_BOT_TOKEN}/sendPhoto"
+                    response = requests.post(send_url, data=data, files=files, timeout=10)
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        if result.get('ok'):
+                            Config.CATUBLOGO = result['result']['message_id']
+                        else:
+                            LOGS.error(f"API Error: {result}")
+                            raise Exception("API request failed")
+                    else:
+                        LOGS.error(f"HTTP {response.status_code}: {response.text}")
+                        raise Exception(f"HTTP {response.status_code}")
+            else:
+                # إذا الصورة غير موجودة، استخدم Telethon فقط
+                LOGS.error(f"Photo not found: {photo_path}")
+                raise Exception("Photo file missing")
+                
+    except Exception as e:
+        LOGS.error(f"Error in startupmessage: {e}")
+        # Fallback: استخدام Telethon بدون الألوان
+        try:
+            caption_text_fallback = f'''〄︙ بــوت ꪖႦ᥆᥆ᦔ  يـعـمـل بـنـجـاح ✨
+
+◈︙ أرسل ( .الاوامر ) لرؤية اوامر السورس 🤖
+
+◈︙ لأستعمال بوت الأختراق عبر كود التيرمكس أرسل ( .هاك ) 💀'''
+            
             Config.CATUBLOGO = await l313l.tgbot.send_file(
                 BOTLOG_CHATID,
-                "https://files.catbox.moe/fok3nr.jpg",
-                caption="**‏᯽︙ بــوت فينيكس يـعـمـل بـنـجـاح ✓ \n᯽︙ أرسل `.الاوامر`لرؤية اوامر السورس \n  ᯽︙ لأستعمال بوت الأختراق عبر كود التيرمكس أرسل`.هاك`**",
-                buttons=[(Button.url("سورس فينيكس", "https://t.me/BD_0I"),)],
+                "l313l/razan/resources/start/arras.JPEG",
+                caption=caption_text_fallback,
+                buttons=[
+                    [Button.url("المـطـور", "https://t.me/BD_0I")]
+                ],
+                parse_mode='html'
             )
-    except Exception as e:
-        LOGS.error(e)
+        except Exception as fallback_error:
+            LOGS.error(f"Fallback failed: {fallback_error}")
         return None
+        
+    # باقي الكود كما هو...
     try:
         msg_details = list(get_item_collectionlist("restart_update"))
         if msg_details:
@@ -112,6 +212,7 @@ async def startupmessage():
     except Exception as e:
         LOGS.error(e)
         return None
+        
     try:
         if msg_details:
             await l313l.check_testcases()
@@ -127,20 +228,24 @@ async def startupmessage():
                 )
             del_keyword_collectionlist("restart_update")
     except Exception as e:
-        LOGS.error(e)
-        return None
-
+        if "Could not find the input entity" in str(e):
+            pass  # لا تطبع الخطأ
+        else:
+            LOGS.error(f"خطأ في كتلة restart_update: {e}")
+            return None
 
 async def mybot():
     try:
         starkbot = await l313l.tgbot.get_me()
-        joker = "فينيكس 🖤"
+        joker = "عبود"
+        commands_aRRaS = """start - للبدء
+hack - قسم أمر الهـاك"""
         bot_name = starkbot.first_name
         botname = f"@{starkbot.username}"
         if bot_name.endswith("Assistant"):
             print("تم تشغيل البوت")
         if starkbot.bot_inline_placeholder:
-            print("Aljoker ForEver")
+            print("Source of Aras")
         else:
             try:
                 await l313l.send_message("@BotFather", "/setinline")
@@ -149,11 +254,17 @@ async def mybot():
                 await asyncio.sleep(1)
                 await l313l.send_message("@BotFather", joker)
                 await asyncio.sleep(2)
+                
+                await l313l.send_message("@BotFather", "/setcommands")
+                await asyncio.sleep(1)
+                await l313l.send_message("@BotFather", botname)
+                await asyncio.sleep(1)
+                await l313l.send_message("@BotFather", commands_aRRaS)
+                await asyncio.sleep(2)
             except Exception as e:
                 print(e)
     except Exception as e:
         print(e)
-
 
 async def add_bot_to_logger_group(chat_id):
     """
@@ -178,6 +289,7 @@ async def add_bot_to_logger_group(chat_id):
             )
         except Exception as e:
             LOGS.error(str(e))
+
                 
 async def load_plugins(folder, extfolder=None):
     """
@@ -237,8 +349,7 @@ async def load_plugins(folder, extfolder=None):
             BOTLOG_CHATID,
             f'- تم بنجاح استدعاء الاوامر الاضافيه \n**عدد الملفات التي استدعيت:** `{success}`\n**فشل في استدعاء :** `{", ".join(failure)}`',
         )
-#شعندك هنا تبحوش ياحلو 😉
-#سورس الجوكر عمك
+        
 async def aljoker_the_best(l313l, group_name):
     async for dialog in l313l.iter_dialogs():
         if dialog.is_group and dialog.title == group_name:
@@ -276,27 +387,27 @@ async def verifyLoggerGroup():
     else:
         descript = "- عزيزي المستخدم هذه هي مجموعه الاشعارات يرجى عدم حذفها  - @BD_0I"
         photobt = await l313l.upload_file(file="l313l/razan/resources/start/Jepthon.JPEG")
-        botlog_group_id = await aljoker_the_best(l313l, "مجموعة أشعارات فينيكس")
+        botlog_group_id = await aljoker_the_best(l313l, "مـجمـوعة آشـعـارات فـيـنـيـكـس")
         if botlog_group_id:
             addgvar("PRIVATE_GROUP_BOT_API_ID", botlog_group_id)
             print("᯽︙تم العثور على مجموعة المساعدة بالفعل وإضافتها إلى المتغيرات.")
         else:
             _, groupid = await create_supergroup(
-                "مجموعة أشعارات فينيكس", l313l, Config.TG_BOT_USERNAME, descript, photobt
+                "مـجمـوعة آشـعـارات فـيـنـيـكـس", l313l, Config.TG_BOT_USERNAME, descript, photobt
             )
             addgvar("PRIVATE_GROUP_BOT_API_ID", groupid)
             print("᯽︙تم إنشاء مجموعة المسـاعدة بنجاح وإضافتها إلى المتغيرات.")
         flag = True
     if PM_LOGGER_GROUP_ID == -100:
-        descript = "᯽︙ وظيفه الكروب يحفظ رسائل الخاص اذا ما تريد الامر احذف الكروب نهائي \n  - @BD_0I"
+        descript = "✧︙ وظيفه الكروب يحفظ رسائل الخاص اذا ما تريد الامر احذف الكروب نهائي \n  - @BD_0I"
         photobt = await l313l.upload_file(file="l313l/razan/resources/start/Jepthon2.JPEG")
-        pm_logger_group_id = await aljoker_the_best(l313l, "مجموعة التخزين")
+        pm_logger_group_id = await aljoker_the_best(l313l, "مـجمـوعة تـﺨـزين فـيـنـيـكـس")
         if pm_logger_group_id:
             addgvar("PM_LOGGER_GROUP_ID", pm_logger_group_id)
             print("تـم العثور على مجموعة الكروب التخزين بالفعل واضافة الـفارات الـيها.")
         else:
             _, groupid = await create_supergroup(
-                "مجموعة التخزين", l313l, Config.TG_BOT_USERNAME, descript, photobt
+                "مـجمـوعة تـﺨـزين فـيـنـيـكـس", l313l, Config.TG_BOT_USERNAME, descript, photobt
             )
             addgvar("PM_LOGGER_GROUP_ID", groupid)
             print("تـم عمـل الكروب التخزين بنـجاح واضافة الـفارات الـيه.")
