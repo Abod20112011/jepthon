@@ -26,7 +26,6 @@ whisper_users = []
 
 # إيموجي بريميوم
 EMOJI_CONTACT = "5258215850745275216"
-EMOJI_DELETE = "5350477112677515642"
 EMOJI_CHANNEL = "5260450573768990626"
 EMOJI_fatfta = "5188619457651567219"
 EFFECT_ID = "5046509860389126442"
@@ -90,22 +89,16 @@ async def bot_start(event):
 <tg-emoji emoji-id="{PREMIUM_EMOJI_ID}">🤖</tg-emoji> <b>انـا البـوت الخـاص بـ</b> <code>{my_fullname}</code>
 
 ❶ <b>التواصـل مـع مـالكـي مـن هنـا</b> <tg-emoji emoji-id="{EMOJI_HEART}">💌</tg-emoji>
-❷ <b>حـذف الحسـابات نهـائياً</b> <tg-emoji emoji-id="{EMOJI_WARN}">⚠️</tg-emoji>
-❸ <b>فَضفـضه بَهوية مجهولـة</b> <tg-emoji emoji-id="{EMOJI_Fatf}">✉️</tg-emoji>
+❷ <b>فَضفـضه بَهوية مجهولـة</b> <tg-emoji emoji-id="{EMOJI_Fatf}">✉️</tg-emoji>
 ﹎﹎﹎﹎﹎﹎﹎﹎﹎﹎
 <tg-emoji emoji-id="{PREMIUM_EMOJI_ID}">👇</tg-emoji> <b>لـ البـدء إستخـدم الازرار بالاسفـل</b>'''
 
-    if chat.id == Config.OWNER_ID:
-        buttons = [
-            [{"text": "لـ حـذف حسـابك", "callback_data": "zzk_bot-5", "style": "danger", "icon_custom_emoji_id": EMOJI_DELETE}]
-        ]
-    else:
-        buttons = [
-            [{"text": "اضغـط لـ التواصـل", "callback_data": "ttk_bot-1", "style": "primary", "icon_custom_emoji_id": EMOJI_CONTACT}],
-            [{"text": "فَضفضة بَهوية مجهولـة", "callback_data": "whisper_menu", "style": "success", "icon_custom_emoji_id": EMOJI_fatfta}],
-            [{"text": "لـ حـذف حسـابك", "callback_data": "zzk_bot-5", "style": "danger", "icon_custom_emoji_id": EMOJI_DELETE}],
-            [{"text": zz_txt, "url": f"https://t.me/{zz_ch}", "style": "primary", "icon_custom_emoji_id": EMOJI_CHANNEL}]
-        ]
+    # الأزرار الرئيسية (بدون زر الحذف)
+    buttons = [
+        [{"text": "اضغـط لـ التواصـل", "callback_data": "contact_menu", "style": "primary", "icon_custom_emoji_id": EMOJI_CONTACT}],
+        [{"text": "فَضفضة بَهوية مجهولـة", "callback_data": "whisper_menu", "style": "success", "icon_custom_emoji_id": EMOJI_fatfta}],
+        [{"text": zz_txt, "url": f"https://t.me/{zz_ch}", "style": "primary", "icon_custom_emoji_id": EMOJI_CHANNEL}]
+    ]
 
     try:
         if custompic:
@@ -203,28 +196,75 @@ async def callback_handler(event):
     data = event.data.decode()
     chat_id = event.chat_id
 
-    if data == "zzk_bot-5":
-        await event.answer("سيتم توجيهك لصفحة حذف الحساب", alert=True)
-        await event.client.send_message(chat_id, "https://my.telegram.org/auth?to=delete")
-    elif data == "ttk_bot-1":
+    # --- القائمة الفرعية للتواصل ---
+    if data == "contact_menu":
+        buttons = [
+            [Button.inline("✅ تفعيل التواصل", data="contact_on", style="primary")],
+            [Button.inline("❌ تعطيل التواصل", data="contact_off", style="danger")],
+            [Button.inline("↩️ رجوع", data="back_to_start", style="secondary")]
+        ]
+        await event.edit("**اختر خياراً للتواصل:**", buttons=buttons)
+
+    elif data == "contact_on":
         if chat_id not in tt:
             tt.append(chat_id)
-            await event.answer("✅ تم تفعيل وضع التواصل. أرسل رسالتك.")
+            await event.answer("✅ تم تفعيل وضع التواصل. أرسل رسالتك.", alert=True)
         else:
+            await event.answer("✅ وضع التواصل مفعل بالفعل.", alert=True)
+        await event.delete()
+
+    elif data == "contact_off":
+        if chat_id in tt:
             tt.remove(chat_id)
-            await event.answer("❌ تم تعطيل وضع التواصل.")
+            await event.answer("❌ تم تعطيل وضع التواصل.", alert=True)
+        else:
+            await event.answer("❌ وضع التواصل غير مفعل أصلاً.", alert=True)
+        await event.delete()
+
+    # --- القائمة الفرعية للفضفضة ---
     elif data == "whisper_menu":
+        buttons = [
+            [Button.inline("✅ تفعيل الفضفضة", data="whisper_on", style="primary")],
+            [Button.inline("❌ تعطيل الفضفضة", data="whisper_off", style="danger")],
+            [Button.inline("↩️ رجوع", data="back_to_start", style="secondary")]
+        ]
+        await event.edit("**اختر خياراً للفضفضة:**", buttons=buttons)
+
+    elif data == "whisper_on":
         if chat_id not in whisper_users:
             whisper_users.append(chat_id)
-            await event.answer("✅ تم تفعيل وضع الفضفضة. أرسل رسالتك.")
+            await event.answer("✅ تم تفعيل وضع الفضفضة. أرسل رسالتك.", alert=True)
         else:
-            whisper_users.remove(chat_id)
-            await event.answer("❌ تم تعطيل وضع الفضفضة.")
+            await event.answer("✅ وضع الفضفضة مفعل بالفعل.", alert=True)
+        await event.delete()
+
     elif data == "whisper_off":
         if chat_id in whisper_users:
             whisper_users.remove(chat_id)
-            await event.answer("❌ تم تعطيل وضع الفضفضة.")
+            await event.answer("❌ تم تعطيل وضع الفضفضة.", alert=True)
+        else:
+            await event.answer("❌ وضع الفضفضة غير مفعل أصلاً.", alert=True)
+        await event.delete()
+
+    # --- رجوع إلى الرسالة الرئيسية ---
+    elif data == "back_to_start":
+        await event.delete()
+        # إعادة إرسال /start (يمكن استدعاء الأمر مباشرة)
+        await event.client.send_message(chat_id, "/start")
+
+    # --- الأزرار القديمة للتعطيل من داخل المحادثة (تبقى كما هي) ---
     elif data == "ttk_bot-off":
         if chat_id in tt:
             tt.remove(chat_id)
-            await event.answer("❌ تم تعطيل وضع التواصل.")
+            await event.answer("❌ تم تعطيل وضع التواصل.", alert=True)
+        else:
+            await event.answer("❌ وضع التواصل غير مفعل.", alert=True)
+        await event.delete()
+
+    elif data == "whisper_off":
+        if chat_id in whisper_users:
+            whisper_users.remove(chat_id)
+            await event.answer("❌ تم تعطيل وضع الفضفضة.", alert=True)
+        else:
+            await event.answer("❌ وضع الفضفضة غير مفعل.", alert=True)
+        await event.delete()
