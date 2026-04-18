@@ -20,7 +20,7 @@ Bot_Username = Config.TG_BOT_USERNAME
 if Config.TG_BOT_USERNAME is not None and tgbot is not None:
 
     @tgbot.on(events.InlineQuery)
-    async def dev_inline_handler(event):  # اسم فريد
+    async def dev_inline_handler(event):  # اسم فريد للمعالج
         builder = event.builder
         result = None
         query = event.text.strip()
@@ -59,14 +59,14 @@ if Config.TG_BOT_USERNAME is not None and tgbot is not None:
 
 
 @bot.on(admin_cmd(outgoing=True, pattern="المطور$"))
-async def developer_repo(event):  # اسم فريد
+async def developer_cmd_handler(event):  # اسم فريد للأمر
     if event.fwd_from:
         return
     lMl10l = Config.TG_BOT_USERNAME
     if event.reply_to_msg_id:
         await event.get_reply_message()
     response = await bot.inline_query(lMl10l, "المطور")
-    if response:  # ✅ فحص لتجنب الخطأ
+    if response:  # فحص لتجنب الخطأ
         await response[0].click(event.chat_id, reply_to=event.reply_to_msg_id)
         await event.delete()
     else:
