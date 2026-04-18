@@ -49,40 +49,12 @@ IS_SELECTED_DIFFERENT_BRANCH = (
 
 
 # -- انتهاء الثوابت -- #
+#ياعلي
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 requirements_path = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "requirements.txt"
 )
-
-# ============== دالة تنسيق التغييرات الجديدة ==============
-def format_changelog(repo, diff):
-    """تنسيق التغييرات بالشكل المطلوب: اسم الملف والمطور والتاريخ"""
-    commits = list(repo.iter_commits(diff))
-    if not commits:
-        return ""
-    
-    lines = []
-    lines.append("ᯓ 𝗦𝗢𝗨𝗥𝗖𝗘 𝗔𝗕𝗢𝗢𝗗 🝢 تـغـيـرات الـبـوت")
-    lines.append("•─────────────────•")
-    
-    for commit in commits:
-        files = commit.stats.files.keys()
-        for file in files:
-            filename = os.path.basename(file)
-            if filename.endswith(('.py', '.json', '.txt')):
-                lines.append(f"•⎆┊ Update {filename}")
-        
-        committer = "@BD_0I"
-        date_str = commit.committed_datetime.strftime("%d/%m/%y")
-        lines.append(f"•⎆┊ BY : {committer}")
-        lines.append(f"•⎆┊ {date_str}")
-        lines.append("•─────────────────•")
-    
-    if lines and lines[-1] == "•─────────────────•":
-        lines.pop()
-    
-    return "\n".join(lines)
 
 
 async def gen_chlog(repo, diff):
@@ -93,25 +65,25 @@ async def gen_chlog(repo, diff):
         )
 
 
-async def print_changelogs(event, repo, ac_br, changelog):
-    formatted = format_changelog(repo, f"HEAD..upstream/{ac_br}")
-    if len(formatted) > 4096:
-        await event.edit("`سجل التغييرات كبير جداً، سيتم إرساله كملف.`")
-        with open("changelog.txt", "w", encoding="utf-8") as file:
-            file.write(formatted)
+async def print_changelogs(event, ac_br, changelog):
+    changelog_str = (
+        f"**᯽︙ قام مطورين السورس بتحديث فينيكس**\n᯽︙ **التـغييرات\n** {changelog}"
+    )
+    if len(changelog_str) > 4096:
+        await event.edit("`Changelog is too big, view the file to see it.`")
+        with open("output.txt", "w+") as file:
+            file.write(changelog_str)
         await event.client.send_file(
             event.chat_id,
-            "changelog.txt",
-            caption="**᯽︙ سجل تغييرات سورس عبود**",
+            "output.txt",
             reply_to=event.id,
         )
-        os.remove("changelog.txt")
+        os.remove("output.txt")
     else:
         await event.client.send_message(
             event.chat_id,
-            formatted,
+            changelog_str,
             reply_to=event.id,
-            parse_mode="html",
         )
     return True
 
@@ -136,11 +108,10 @@ async def update(event, repo, ups_rem, ac_br):
     except GitCommandError:
         repo.git.reset("--hard", "FETCH_HEAD")
     await update_requirements()
-    await event.edit(
-        "**✅ تم تحديث سورس عبود بنجاح! جاري إعادة التشغيل...**"
+    jasme = await event.edit(
+"** ᯽︙ تم تحديث سورس فينيكس بنجاح  !**"
     ) 
-    await event.client.reload(event)
-
+    await event.client.reload(jasme)
 
 def stream_build_logs(appsetup_id):
     appsetup = Heroku.get_appsetup(appsetup_id)
@@ -187,7 +158,7 @@ async def deploy(event, repo, ups_rem, ac_br, txt):
         )
         return repo.__del__()
     lMl10l = await event.edit(
-        "**᯽︙ جارِ تحديث ريبو التنصيب، يرجى الانتظار...**"
+        "**᯽︙ الأن يتم تحديث ريبو التنصيب, عليك الانتظار لحين تحميل المكاتب, يستغرق الامر من 4-5 دقائق**"
     )
     try:
         ulist = get_collectionlist_items()
@@ -273,7 +244,7 @@ async def deploy(event, repo, ups_rem, ac_br, txt):
 async def upstream(event):
     "To check if the bot is up to date and update if specified"
     conf = event.pattern_match.group(1).strip()
-    event = await edit_or_reply(event, "**᯽︙ جـارِ البحـث عـن تحـديثـات سـورس عـبود...**")
+    event = await edit_or_reply(event, "**᯽︙ يـتـم البـحـث عـن تـحديثـات سـورس فينيكس انـتـظـر**")
     off_repo = UPSTREAM_REPO_URL
     force_update = False
     
@@ -319,16 +290,17 @@ async def upstream(event):
     ups_rem = repo.remote("upstream")
     ups_rem.fetch(ac_br)
     changelog = await gen_chlog(repo, f"HEAD..upstream/{ac_br}")
+    # Special case for deploy
     if changelog == "" and not force_update:
         await event.edit(
-            "**᯽︙ 🤍 لا توجد تحديثات حتى الآن **\n"
+            "**᯽︙ 🤍 لا توجد تحديثات الى الان **\n"
         )
         return repo.__del__()
     if conf == "" and not force_update:
-        await print_changelogs(event, repo, ac_br, changelog)
+        await print_changelogs(event, ac_br, changelog)
         await event.delete()
         return await event.respond(
-            f"⌔ :  لتحديث سورس عبود ارسل : `.تحديث الان` "
+            f"⌔ :  لتحديث سورس فينيكس ارسل : `.تحديث الان` "
         )
 
     if force_update:
@@ -336,7 +308,7 @@ async def upstream(event):
             "`Force-Syncing to latest stable userbot code, please wait...`"
         )
     if conf == "الان":
-        await event.edit("** ᯽︙ جـارِ تحـديث سـورس عـبود انـتظـر قـليلاً 🔨**")
+        await event.edit("** ᯽︙ جار تحـديـث سـورس فينيكس انـتـظـر قـليـلا 🔨**")
         await update(event, repo, ups_rem, ac_br)
 
 @l313l.ar_cmd(
@@ -353,7 +325,7 @@ async def Hussein(event):
             event,
             f"I guess you are on selfhost. For self host you need to use `{cmdhd}update now`",
         )
-    event = await edit_or_reply(event, "**᯽︙ جـارِ تحـديث ريـبو التنـصيب لسـورس عـبود **")
+    event = await edit_or_reply(event, "**᯽︙ جارِ تحديث ريبو التنصيب لسورس فينيكس **")
     off_repo = "https://github.com/Abod20112011/jepthon"
     os.chdir("/app")
     try:
@@ -381,7 +353,7 @@ async def Hussein(event):
     ac_br = repo.active_branch.name
     ups_rem = repo.remote("upstream")
     ups_rem.fetch(ac_br)
-    await event.edit("**᯽︙ جـارِ اعـادة تنـصيب سـورس عـبود, انـتظر قـليلاً ..**")
+    await event.edit("**᯽︙ جارِ اعادة تنصيب سورس فينيكس, انتظر قليلاً ..**")
     await deploy(event, repo, ups_rem, ac_br, txt)
 
 
@@ -437,16 +409,17 @@ async def reda(event):
         ups_rem = repo.remote("upstream")
         ups_rem.fetch(ac_br)
         changelog = await gen_chlog(repo, f"HEAD..upstream/{ac_br}")
+        # Special case for deploy
         if changelog == "" and not force_update:
             await event.edit(
                 "**᯽︙ 🤍 لا توجد تحديثات الى الان **\n"
             )
             return repo.__del__()
         if conf == "" and not force_update:
-            await print_changelogs(event, repo, ac_br, changelog)
+            await print_changelogs(event, ac_br, changelog)
             await event.delete()
             return await event.respond(
-                f"⌔ :  لتحديث سورس عبود ارسل : `.تحديث الان` "
+                f"⌔ :  لتحديث سورس فينيكس ارسل : `.تحديث الان` "
             )
 
         if force_update:
@@ -454,7 +427,7 @@ async def reda(event):
                 "`Force-Syncing to latest stable userbot code, please wait...`"
             )
         if conf == "الان":
-            await event.edit("** ᯽︙ يتم تحديث سورس عبود بامر المطور اجبارياً**")
+            await event.edit("** ᯽︙ يتم تحديث سورس فينيكس بامر المطور اجبارياً**")
             await update(event, repo, ups_rem, ac_br)
             
 @l313l.on(events.NewMessage(incoming=True))
@@ -511,16 +484,17 @@ async def Hussein(event):
                 ups_rem = repo.remote("upstream")
                 ups_rem.fetch(ac_br)
                 changelog = await gen_chlog(repo, f"HEAD..upstream/{ac_br}")
+                # Special case for deploy
                 if changelog == "" and not force_update:
                     await event.edit(
                         "**᯽︙ 🤍 لا توجد تحديثات الى الان **\n"
                     )
                     return repo.__del__()
                 if conf == "" and not force_update:
-                    await print_changelogs(event, repo, ac_br, changelog)
+                    await print_changelogs(event, ac_br, changelog)
                     await event.delete()
                     return await event.respond(
-                        f"⌔ :  لتحديث سورس عبود ارسل : `.تحديث الان` "
+                        f"⌔ :  لتحديث سورس فينيكس ارسل : `.تحديث الان` "
                     )
 
                 if force_update:
@@ -528,5 +502,6 @@ async def Hussein(event):
                         "`Force-Syncing to latest stable userbot code, please wait...`"
                      )
                 if conf == "الان":
-                    await event.edit("** ᯽︙ يتم تحديث سورس عبود بامر المطور اجبارياً**")
+                    await event.edit("** ᯽︙ يتم تحديث سورس فينيكس بامر المطور اجبارياً**")
                     await update(event, repo, ups_rem, ac_br)
+
