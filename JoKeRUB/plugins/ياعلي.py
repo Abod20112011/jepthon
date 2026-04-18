@@ -17,7 +17,8 @@ if Config.TG_BOT_USERNAME is not None and tgbot is not None:
         query = event.text.strip()
         await bot.get_me()
         if query.startswith("هاك") and event.query.user_id == bot.uid:
-            buttons = Button.url("• اضغط هنا عزيزي •", f"https://t.me/{Bot_Username.replace('@', '')}")
+            joker = Bot_Username.replace("@", "")
+            buttons = Button.url("• اضغط هنا عزيزي •", f"https://t.me/{joker}")
             if JOKER_PIC and JOKER_PIC.endswith((".jpg", ".png", "gif", "mp4")):
                 result = builder.photo(
                     JOKER_PIC, text=REH, buttons=buttons, link_preview=False
@@ -37,7 +38,8 @@ if Config.TG_BOT_USERNAME is not None and tgbot is not None:
                     buttons=buttons,
                     link_preview=False,
                 )
-        await event.answer([result] if result else None)
+        await event.answer([result] if result else [])
+
 
 @bot.on(admin_cmd(outgoing=True, pattern="هاك$"))
 async def hack_cmd_handler(event):  # اسم فريد
@@ -53,8 +55,6 @@ async def hack_cmd_handler(event):  # اسم فريد
         await event.delete()
     else:
         await edit_or_reply(event, "❌ لم يتم العثور على نتائج.")
-
-#####################
 ###
 #
 '''
