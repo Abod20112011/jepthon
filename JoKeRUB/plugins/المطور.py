@@ -1,75 +1,87 @@
-import random
+# -*- coding: utf-8 -*-
 import re
-import time
-from platform import python_version
-
-from telethon import version, Button, events
-from telethon.errors.rpcerrorlist import (
-    MediaEmptyError,
-    WebpageCurlFailedError,
-    WebpageMediaEmptyError,
-)
-from telethon.events import CallbackQuery
-
-from JoKeRUB import StartTime, l313l, JEPVERSION
-
+from telethon import Button, events
+from JoKeRUB import l313l, bot
 from ..Config import Config
 from ..core.managers import edit_or_reply
-from ..helpers.functions import catalive, check_data_base_heal_th, get_readable_time
-from ..helpers.utils import reply_id
-from ..sql_helper.globals import addgvar, delgvar, gvarstatus
-from . import mention
+from . import tgbot
 
-plugin_category = "utils"
+# ========== إعدادات المطور ==========
+DEV_PIC = "https://files.catbox.moe/k4fxu0.jpg"  # صورة المطور
+DEV_TEXT = (
+    "**مطورين سورس فينيكس**\n"
+    "✛━━━━━━━━━━━━━✛\n"
+    "**• المطور الأساسي :** @BD_0I\n"
+    "**• قناة السورس :** @lAYAI\n"
+    "✛━━━━━━━━━━━━━✛\n"
+    "**• النظام :** يعمل الآن بنجاح 🚀"
+)
+# =====================================
+
+if Config.TG_BOT_USERNAME is not None and tgbot is not None:
+
+    @tgbot.on(events.InlineQuery)
+    async def inline_handler(event):
+        builder = event.builder
+        result = None
+        query = event.text.strip()
+        if query.startswith("المطور") and event.query.user_id == l313l.uid:
+            # بناء الأزرار
+            buttons = [
+                [Button.url("👨‍💻 المطور: BD_0I", "https://t.me/BD_0I")],
+                [Button.url("📢 قناة السورس", "https://t.me/lAYAI")]
+            ]
+            if DEV_PIC and DEV_PIC.endswith((".jpg", ".png", "gif", "mp4")):
+                result = builder.photo(
+                    DEV_PIC,
+                    text=DEV_TEXT,
+                    buttons=buttons,
+                    link_preview=False,
+                    parse_mode="html"
+                )
+            elif DEV_PIC:
+                result = builder.document(
+                    DEV_PIC,
+                    title="معلومات المطور",
+                    text=DEV_TEXT,
+                    buttons=buttons,
+                    link_preview=False,
+                    parse_mode="html"
+                )
+            else:
+                result = builder.article(
+                    title="معلومات المطور",
+                    text=DEV_TEXT,
+                    buttons=buttons,
+                    link_preview=False,
+                    parse_mode="html"
+                )
+        await event.answer([result] if result else None)
+
 
 @l313l.ar_cmd(
     pattern="المطور$",
-    command=("المطور", plugin_category),
+    command=("المطور", "utils"),
     info={
-        "header": "لأظهار مطورين السورس",
-        "usage": [
-            "{tr}المطور",
-        ],
+        "header": "لإظهار معلومات المطور مع أزرار أونلاين",
+        "usage": "{tr}المطور",
     },
 )
-async def amireallyalive(event):
-    "A kind of showing bot details"
-    reply_to_id = await reply_id(event)
-    uptime = await get_readable_time((time.time() - StartTime))
-    _, check_sgnirts = check_data_base_heal_th()
-    EMOJI = gvarstatus("ALIVE_EMOJI") or "  - "
-    CUSTOM_ALIVE_TEXT = gvarstatus("ALIVE_TEXT")
-    CAT_IMG = "https://files.catbox.moe/k4fxu0.jpg"
-    if CAT_IMG:
-        CAT = [x for x in CAT_IMG.split()]
-        A_IMG = list(CAT)
-        PIC = random.choice(A_IMG)
-        cat_caption = f"مطورين فينيكس\n"
-        cat_caption += f"✛━━━━━━━━━━━━━✛\n"
-        cat_caption += f"- المطور  : @BD_0I\n"
-        cat_caption += f"✛━━━━━━━━━━━━━✛\n"
-        await event.client.send_file(
-            event.chat_id, PIC, caption=cat_caption, reply_to=reply_to_id
-        )
+async def developer_cmd(event):
+    """إرسال رسالة المطور بأزرار أونلاين"""
+    if event.fwd_from:
+        return
+    bot_username = Config.TG_BOT_USERNAME
+    if not bot_username:
+        return await edit_or_reply(event, "❌ لم يتم تعيين توكن البوت المساعد.")
 
-@l313l.tgbot.on(CallbackQuery(data=re.compile(b"stats")))
-async def on_plug_in_callback_query_handler(event):
-    statstext = await catalive(StartTime)
-    await event.answer(statstext, cache_time=0, alert=True)
-
-progs = [6373993992]
-
-@l313l.on(events.NewMessage(incoming=True))
-async def reda(event):
-    if event.reply_to and event.sender_id in progs:
-       reply_msg = await event.get_reply_message()
-       owner_id = reply_msg.from_id.user_id
-       if owner_id == l313l.uid:
-           if event.message.message == "حظر من السورس":
-               await event.reply("**حاظر مطوري ، لقد تم حظره من استخدام السورس**")
-               addgvar("blockedfrom", "yes")
-           elif event.message.message == "الغاء الحظر من السورس":
-               await event.reply("**حاظر مطوري، لقد الغيت الحظر**")
-               delgvar("blockedfrom")
-                
-
+    # استدعاء inline query من البوت
+    try:
+        response = await bot.inline_query(bot_username, "المطور")
+        if response:
+            await response[0].click(event.chat_id, reply_to=event.reply_to_msg_id)
+            await event.delete()
+        else:
+            await edit_or_reply(event, "❌ لم يتم العثور على نتائج.")
+    except Exception as e:
+        await edit_or_reply(event, f"❌ حدث خطأ: {e}")
