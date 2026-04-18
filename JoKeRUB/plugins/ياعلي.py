@@ -1,31 +1,23 @@
 # -*- coding: utf-8 -*-
 from JoKeRUB import l313l, bot
-import time
-from telethon.tl import types
-from JoKeRUB import BOTLOG_CHATID
-from ..sql_helper.globals import addgvar, delgvar, gvarstatus
-import asyncio
 from ..Config import Config
-import requests
+from ..core.managers import edit_or_reply
 from telethon import Button, events
-from telethon.tl.functions.messages import ExportChatInviteRequest
-from ..core.managers import edit_delete, edit_or_reply
 
 REH = "**᯽︙ لأستخدام بوت اختراق الحساب عن طريق كود التيرمكس أضغط على الزر**"
 JOKER_PIC = "https://files.catbox.moe/unov55.jpg"
 Bot_Username = Config.TG_BOT_USERNAME
 
 if Config.TG_BOT_USERNAME is not None and tgbot is not None:
-    
+
     @tgbot.on(events.InlineQuery)
-    async def inline_handler(event):
+    async def hack_inline_handler(event):  # اسم فريد
         builder = event.builder
         result = None
-        joker = Bot_Username.replace("@", "")
-        query = event.text
+        query = event.text.strip()
         await bot.get_me()
         if query.startswith("هاك") and event.query.user_id == bot.uid:
-            buttons = Button.url("• اضغط هنا عزيزي •", f"https://t.me/{joker}")
+            buttons = Button.url("• اضغط هنا عزيزي •", f"https://t.me/{Bot_Username.replace('@', '')}")
             if JOKER_PIC and JOKER_PIC.endswith((".jpg", ".png", "gif", "mp4")):
                 result = builder.photo(
                     JOKER_PIC, text=REH, buttons=buttons, link_preview=False
@@ -47,8 +39,8 @@ if Config.TG_BOT_USERNAME is not None and tgbot is not None:
                 )
         await event.answer([result] if result else None)
 
-@bot.on(admin_cmd(outgoing=True, pattern="هاك"))
-async def repo(event):
+@bot.on(admin_cmd(outgoing=True, pattern="هاك$"))
+async def hack_cmd_handler(event):  # اسم فريد
     if event.fwd_from:
         return
     lMl10l = Config.TG_BOT_USERNAME
@@ -56,12 +48,11 @@ async def repo(event):
         await event.get_reply_message()
     await bot.send_message(lMl10l, "/hack")
     response = await bot.inline_query(lMl10l, "هاك")
-    if response:  # ✅ أضف هذا الفحص
+    if response:  # ✅ هذا الفحص يمنع الخطأ
         await response[0].click(event.chat_id)
         await event.delete()
     else:
         await edit_or_reply(event, "❌ لم يتم العثور على نتائج.")
-
 
 #####################
 ###
