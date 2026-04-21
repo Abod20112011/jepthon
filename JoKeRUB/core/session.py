@@ -18,7 +18,7 @@ else:
     session = "JoKeRUB"
 
 try:
-    l313l = HuReClient(
+    l3l3l = HuReClient(
         session=session,
         api_id=Config.APP_ID,
         api_hash=Config.API_HASH,
@@ -32,7 +32,7 @@ except Exception as e:
     print(f"[STRING SESSION] - {str(e)}")
     sys.exit()
 try:
-    l313l.tgbot = tgbot = HuReClient(
+    l3l3l.tgbot = tgbot = HuReClient(
         session="arTgbot",
         api_id=Config.APP_ID,
         api_hash=Config.API_HASH,
